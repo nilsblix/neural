@@ -161,6 +161,16 @@ export class Vector {
 		}
 		return ret;
 	}
+
+	static hadamard(a: Vector, b: Vector) {
+		Vector.checkCompatibility(a, b);
+
+		const ret = Vector.fromType(a.type, a.length);
+		for (let i = 0; i < ret.length; i++) {
+			ret.elements[i] = a.elements[i] * b.elements[i];
+		}
+		return ret;
+	}
 }
 
 /**
