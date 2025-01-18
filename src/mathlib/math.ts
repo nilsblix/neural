@@ -1,3 +1,40 @@
+export class PCG32 {
+	private state: bigint;
+	private readonly multiplier: bigint = 6364136223846793005n;
+	private readonly increment: bigint = 1442695040888963407n;
+
+	constructor(seed: bigint) {
+		this.state = seed + this.increment;
+		this.pcg32(); // Advance the state once to avoid starting from zero
+	}
+
+	private rotr32(x: number, r: number): number {
+		return (x >>> r) | (x << (-r & 31)) >>> 0;
+	}
+
+	public pcg32(): number {
+		const x = this.state;
+		const count = Number((x >> 59n) & 31n); // Extract the top 5 bits as the rotation amount
+
+		this.state = x * this.multiplier + this.increment;
+
+		let xorShifted = Number((x >> 18n) & 0xFFFFFFFFn); // 18 = (64 - 32 - 5)
+		xorShifted ^= xorShifted >>> 18; // Xorshift for randomness
+
+		this.step();
+
+		return this.rotr32(xorShifted, count);
+	}
+
+	public step(): void {
+		this.state++;
+	}
+
+	public pcg32_0to1(): number {
+		return (1 + this.pcg32() / 4294967296) / 2;
+	}
+}
+
 export class V2 {
 	x: number;
 	y: number;
@@ -42,6 +79,14 @@ export class Vector {
 
 	get length() {
 		return this.elements.length;
+	}
+
+	clone() {
+		const ret = Vector.fromType(this.type, this.length);
+		for (let i = 0; i < this.length; i++) {
+			ret.elements[i] = this.elements[i];
+		}
+		return ret;
 	}
 
 	static fromType(type: "f32" | "f64", length: number): Vector {
@@ -184,6 +229,10 @@ export class Matrix {
 			ret.elements[i] = Vector.dot(mat.elements[i], vec);
 		}
 		return ret;
+	}
+
+	static affineTransformation(mat: Matrix, vec: Vector, off: Vector): Vector {
+		return Vector.add(Matrix.multVector(mat, vec), off);
 	}
 
 	static multTransposeVector(mat: Matrix, vec: Vector) {
