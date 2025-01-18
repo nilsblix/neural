@@ -285,6 +285,9 @@ export class Matrix {
 	* i length from alength and j length from blength
 	*/
 	static fromVecMultVec(a: Vector, b: Vector) {
+		console.log("a len: " + a.length);
+		console.log("b len: " + b.length);
+
 		const elems: Vector[] = [];
 		for (let i = 0; i < a.length; i++) {
 			const row = [];

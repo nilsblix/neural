@@ -40,8 +40,14 @@ export class Network {
 			}
 		}
 
+		console.dir(nw);
+		console.dir(nb);
+
+		console.assert(this.layers.length == nw.length);
+		console.assert(this.layers.length == nb.length);
+		const cnst = eta / mini_batch.length;
+
 		for (let i = 0; i < this.layers.length; i++) {
-			const cnst = eta / mini_batch.length;
 			this.layers[i].weights = ml.Matrix.sub(this.layers[i].weights, ml.Matrix.scale(cnst, nw[i]));
 			this.layers[i].biases = ml.Vector.sub(this.layers[i].biases, ml.Vector.scale(cnst, nb[i]));
 		}
@@ -157,7 +163,7 @@ export class Layer {
 	backprop(prev_activations: ml.Vector, delta: ml.Vector): {
 		delta: ml.Vector, nabla_b: ml.Vector, nabla_w: ml.Matrix
 	} {
-		const sp = Layer.sigmoid_prime(this.zs);
+		const sp = Layer.sigmoid_prime(prev_activations);
 		const new_delta = ml.Vector.hadamard(ml.Matrix.multTransposeVector(this.weights, delta), sp);
 		const nabla_b = new_delta;
 		const nabla_w = ml.Matrix.fromVecMultVec(prev_activations, new_delta);
