@@ -210,6 +210,78 @@ export class Matrix {
 		return this.elements[i].length;
 	}
 
+	clone() {
+		const ret: Vector[] = [];
+		for (let i = 0; i < this.i_length; i++) {
+			ret.push(this.elements[i].clone());
+		}
+		return new Matrix(ret);
+	}
+
+	static matrix_matrix_compatibility(a: Matrix, b: Matrix) {
+		if (a.i_length != b.i_length) {
+			throw new Error(`Matrix i lengths are not the same. a.i_len=${a.i_length}, b.i_len=${b.i_length}`);
+		}
+		if (a.j_length(0) != b.j_length(0)) {
+			throw new Error(`Matrix j lengths are not the same. a.j.len=${a.j_length(0)}, b.j_len=${b.j_length(0)}`);
+		}
+	}
+
+	static add(a: Matrix, b: Matrix) {
+		Matrix.matrix_matrix_compatibility(a, b);
+
+		const ret: Vector[] = [];
+		for (let i = 0; i < a.i_length; i++) {
+			const row = [];
+			for (let j = 0; j < a.j_length(0); j++) {
+				row.push(a.elements[i].elements[j] + b.elements[i].elements[j]);
+			}
+			ret.push(new Vector(new Float32Array(row)));
+		}
+		return new Matrix(ret);
+	}
+
+	static sub(a: Matrix, b: Matrix) {
+		Matrix.matrix_matrix_compatibility(a, b);
+
+		const ret: Vector[] = [];
+		for (let i = 0; i < a.i_length; i++) {
+			const row = [];
+			for (let j = 0; j < a.j_length(0); j++) {
+				row.push(a.elements[i].elements[j] - b.elements[i].elements[j]);
+			}
+			ret.push(new Vector(new Float32Array(row)));
+		}
+		return new Matrix(ret);
+	}
+
+	static scale(s: number, mat: Matrix) {
+		const ret: Vector[] = [];
+		for (let i = 0; i < mat.i_length; i++) {
+			const row = [];
+			for (let j = 0; j < mat.j_length(0); j++) {
+				row.push(s * mat.elements[i].elements[j]);
+			}
+			ret.push(new Vector(new Float32Array(row)));
+		}
+		return new Matrix(ret);
+	}
+
+	static hadamard(a: Matrix, b: Matrix) {
+		Matrix.matrix_matrix_compatibility(a, b);
+
+		const ret: Vector[] = [];
+		for (let i = 0; i < a.i_length; i++) {
+			const row = [];
+			for (let j = 0; j < a.j_length(0); j++) {
+				row.push(a.elements[i].elements[j] * b.elements[i].elements[j]);
+			}
+			ret.push(new Vector(new Float32Array(row)));
+		}
+		return new Matrix(ret);
+	}
+
+
 	static matrix_vector_compatibility(mat: Matrix, vec: Vector) {
 		if (mat.j_length(0) != vec.length) {
 			throw new Error(`Matrix and Vector length are not compatible for multiplying. Matrix.j_length=${mat.j_length(0)}. Vector.length=${vec.length}`)

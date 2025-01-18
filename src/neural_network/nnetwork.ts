@@ -20,9 +20,30 @@ export class Network {
 		}
 	}
 
-	//processMiniBatch(mini_batch: something, eta: number) {
-	//
-	//}
+	processMiniBatch(mini_batch: something, eta: number) {
+		const x1 = mini_batch[0].x;
+		const y1 = mini_batch[0].y;
+
+		const ret = this.processPartials(x1, y1);
+		const nb = ret.nabla_b;
+		const nw = ret.nabla_w;
+
+		for (let i = 0; i < mini_batch.length; i++) {
+			const x = mini_batch[i].x;
+			const y = mini_batch[i].y;
+			const [nabla_b, nabla_w] = this.processPartials(x, y);
+
+			for (let k = 0; k < this.layers.length; k++) {
+				nb[k] = ml.Vector.add(nb[k], nabla_b[k]);
+				nw[k] = ml.Matrix.add(nw[k], nabla_w[k]);
+			}
+		}
+
+		for (let i = 0; i < this.layers.length; i++) {
+			const cnst = eta / mini_batch.length;
+			this.layers[i].weights = ml.Matrix.sub(this.layers[i].weights, ml.Matrix.scale(cnst, nw[i]));
+		}
+	}
 
 	feedforward(input: ml.Vector): ml.Vector {
 		var output = input.clone();
@@ -137,7 +158,7 @@ export class Layer {
 		const sp = Layer.sigmoid_prime(this.zs);
 		const new_delta = ml.Vector.hadamard(ml.Matrix.multTransposeVector(this.weights, delta), sp);
 		const nabla_b = new_delta;
-		const nabla_w = ml.Vector.hadamard(prev_activations, new_delta);
+		const nabla_w = ml.Matrix.hadamard(prev_activations, new_delta);
 		return { delta: new_delta, nabla_b, nabla_w };
 	}
 
