@@ -281,6 +281,21 @@ export class Matrix {
 		return new Matrix(ret);
 	}
 
+	/**
+	* i length from alength and j length from blength
+	*/
+	static fromVecMultVec(a: Vector, b: Vector) {
+		const elems: Vector[] = [];
+		for (let i = 0; i < a.length; i++) {
+			const row = [];
+			for (let j = 0; j < b.length; j++) {
+				row.push(a.elements[i] * b.elements[j]);
+			}
+			const vec = new Vector(new Float32Array(row));
+			elems.push(vec);
+		}
+		return new Matrix(elems);
+	}
 
 	static matrix_vector_compatibility(mat: Matrix, vec: Vector) {
 		if (mat.j_length(0) != vec.length) {

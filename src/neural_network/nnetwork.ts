@@ -1,4 +1,5 @@
 import * as ml from "../mathlib/math.ts";
+import { Batch } from "../nnmanager.ts";
 
 export class Network {
 	layers: Layer[];
@@ -20,18 +21,18 @@ export class Network {
 		}
 	}
 
-	processMiniBatch(mini_batch: something, eta: number) {
-		const x1 = mini_batch[0].x;
-		const y1 = mini_batch[0].y;
+	processMiniBatch(mini_batch: Batch[], eta: number) {
+		const x1 = mini_batch[0].xs;
+		const y1 = mini_batch[0].ys;
 
 		const ret = this.processPartials(x1, y1);
 		const nb = ret.nabla_b;
 		const nw = ret.nabla_w;
 
 		for (let i = 0; i < mini_batch.length; i++) {
-			const x = mini_batch[i].x;
-			const y = mini_batch[i].y;
-			const [nabla_b, nabla_w] = this.processPartials(x, y);
+			const x = mini_batch[i].xs;
+			const y = mini_batch[i].ys;
+			const { nabla_b, nabla_w } = this.processPartials(x, y);
 
 			for (let k = 0; k < this.layers.length; k++) {
 				nb[k] = ml.Vector.add(nb[k], nabla_b[k]);
@@ -42,6 +43,7 @@ export class Network {
 		for (let i = 0; i < this.layers.length; i++) {
 			const cnst = eta / mini_batch.length;
 			this.layers[i].weights = ml.Matrix.sub(this.layers[i].weights, ml.Matrix.scale(cnst, nw[i]));
+			this.layers[i].biases = ml.Vector.sub(this.layers[i].biases, ml.Vector.scale(cnst, nb[i]));
 		}
 	}
 
@@ -153,12 +155,12 @@ export class Layer {
 	}
 
 	backprop(prev_activations: ml.Vector, delta: ml.Vector): {
-		delta: ml.Vector, nabla_b: ml.Vector, nabla_w: ml.Vector
+		delta: ml.Vector, nabla_b: ml.Vector, nabla_w: ml.Matrix
 	} {
 		const sp = Layer.sigmoid_prime(this.zs);
 		const new_delta = ml.Vector.hadamard(ml.Matrix.multTransposeVector(this.weights, delta), sp);
 		const nabla_b = new_delta;
-		const nabla_w = ml.Matrix.hadamard(prev_activations, new_delta);
+		const nabla_w = ml.Matrix.fromVecMultVec(prev_activations, new_delta);
 		return { delta: new_delta, nabla_b, nabla_w };
 	}
 
