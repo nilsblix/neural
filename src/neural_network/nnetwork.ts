@@ -17,6 +17,11 @@ export class Network {
 		}
 	}
 
+	evaluate(input: ml.Vector) {
+		const output = this.feedforward(input);
+		return this.softmax(output);
+	}
+
 	processMiniBatch(mini_batch: Batch[], eta: number) {
 		const x1 = mini_batch[0].xs;
 		const y1 = mini_batch[0].ys;
@@ -26,13 +31,20 @@ export class Network {
 		const nw = ret.nabla_w;
 
 		var avg_cost = 0.0;
+		var num_correct = 0;
+		var num_wrong = 0;
 
 		for (let i = 0; i < mini_batch.length; i++) {
 			const x = mini_batch[i].xs;
 			const y = mini_batch[i].ys;
-			const { cost, nabla_b, nabla_w } = this.processPartials(x, y);
+			const { correct, cost, nabla_b, nabla_w } = this.processPartials(x, y);
 
 			avg_cost += cost;
+
+			if (correct)
+				num_correct++;
+			else
+				num_wrong++;
 
 			for (let k = 0; k < this.layers.length; k++) {
 				nb[k] = ml.Vector.add(nb[k], nabla_b[k]);
@@ -41,7 +53,6 @@ export class Network {
 		}
 
 		avg_cost /= mini_batch.length;
-		console.log(avg_cost);
 
 		console.assert(this.layers.length == nw.length);
 		console.assert(this.layers.length == nb.length);
@@ -51,6 +62,8 @@ export class Network {
 			this.layers[i].weights = ml.Matrix.sub(this.layers[i].weights, ml.Matrix.scale(cnst, nw[i]));
 			this.layers[i].biases = ml.Vector.sub(this.layers[i].biases, ml.Vector.scale(cnst, nb[i]));
 		}
+
+		return { avg_cost, num_correct };
 	}
 
 	feedforward(input: ml.Vector): ml.Vector {
@@ -64,6 +77,7 @@ export class Network {
 	processPartials(input: ml.Vector, target: ml.Vector) {
 		var activation = this.feedforward(input);
 		const cost = this.cost(activation, target);
+		const correct = this.correct(activation, target);
 
 		const sp = Layer.sigmoid_prime(activation);
 		var delta = ml.Vector.hadamard(this.cost_derivative(activation, target), sp);
@@ -79,9 +93,28 @@ export class Network {
 			nabla_w.unshift(ret.nabla_w);
 		}
 
-		return { cost, nabla_b, nabla_w };
+		return { correct, cost, nabla_b, nabla_w };
 
 	}
+
+	correct(activations: ml.Vector, target: ml.Vector) {
+		var target_correct = -1;
+
+		var activations_guess_correct = -1;
+		var highest_activation = Number.NEGATIVE_INFINITY;
+		for (let i = 0; i < activations.length; i++) {
+			if (activations.elements[i] > highest_activation) {
+				highest_activation = activations.elements[i];
+				activations_guess_correct = i;
+			}
+
+			if (target.elements[i] == 1)
+				target_correct = i;
+		}
+		return target_correct == activations_guess_correct;
+	}
+
+
 
 	cost(activations: ml.Vector, target: ml.Vector) {
 		const dv = ml.Vector.sub(activations, target);
@@ -93,15 +126,23 @@ export class Network {
 		return ml.Vector.sub(activations, target);
 	}
 
+	softmax(activations: ml.Vector) {
+		var sum = 0.0;
+		for (let i = 0; i < activations.length; i++) {
+			sum += Math.exp(activations.elements[i]);
+		}
+		const vec = ml.Vector.fromType(activations.type, activations.length);
+		for (let i = 0; i < vec.length; i++) {
+			vec.elements[i] = Math.exp(activations.elements[i]) / sum;
+		}
+		return vec;
+	}
 
 }
 
 export class Layer {
 	weights: ml.Matrix; // to prev neurons
 	biases: ml.Vector; // when being activated from prev neurons
-
-	//nabla_w: ml.Vector;
-	//nabla_b: ml.Vector;
 
 	zs: ml.Vector; // raw activations (without sigmoid)
 
@@ -121,9 +162,6 @@ export class Layer {
 		}
 		this.weights = new ml.Matrix(elem);
 		this.biases = new ml.Vector(new Float32Array(bs));
-
-		//this.nabla_w = new ml.Vector(new Float32Array(num_neurons));
-		//this.nabla_b = new ml.Vector(new Float32Array(num_neurons));
 
 		this.zs = ml.Vector.fromType(this.biases.type, this.biases.length);
 	}
