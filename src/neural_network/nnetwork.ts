@@ -8,15 +8,11 @@ export class Network {
 	 * layers goes from the one after input to (includes) output
 	 * layers do not contain any information about activation, the activations just gets passed through the network
 	 */
-	constructor(seed: number, input_size: number, num_layers: number, layer_sizes: number[]) {
-		if (num_layers != layer_sizes.length) {
-			throw new Error(`num_layers and number of sizes don't match in network constructor. num_layers=${num_layers}, num_sizes=${layer_sizes.length}`);
-		}
-
+	constructor(seed: number, input_size: number, layer_sizes: number[]) {
 		this.layers = [];
 
 		const rng = new ml.PCG32(BigInt(seed));
-		for (let l = 0; l < num_layers; l++) {
+		for (let l = 0; l < layer_sizes.length; l++) {
 			this.layers.push(new Layer(rng, layer_sizes[l], l == 0 ? input_size : layer_sizes[l - 1]));
 		}
 	}
@@ -29,10 +25,14 @@ export class Network {
 		const nb = ret.nabla_b;
 		const nw = ret.nabla_w;
 
+		var avg_cost = 0.0;
+
 		for (let i = 0; i < mini_batch.length; i++) {
 			const x = mini_batch[i].xs;
 			const y = mini_batch[i].ys;
-			const { nabla_b, nabla_w } = this.processPartials(x, y);
+			const { cost, nabla_b, nabla_w } = this.processPartials(x, y);
+
+			avg_cost += cost;
 
 			for (let k = 0; k < this.layers.length; k++) {
 				nb[k] = ml.Vector.add(nb[k], nabla_b[k]);
@@ -40,8 +40,8 @@ export class Network {
 			}
 		}
 
-		console.dir(nw);
-		console.dir(nb);
+		avg_cost /= mini_batch.length;
+		console.log(avg_cost);
 
 		console.assert(this.layers.length == nw.length);
 		console.assert(this.layers.length == nb.length);
@@ -63,23 +63,29 @@ export class Network {
 
 	processPartials(input: ml.Vector, target: ml.Vector) {
 		var activation = this.feedforward(input);
+		const cost = this.cost(activation, target);
 
 		const sp = Layer.sigmoid_prime(activation);
 		var delta = ml.Vector.hadamard(this.cost_derivative(activation, target), sp);
 
-		const nabla_b = [];
-		const nabla_w = [];
+		const nabla_b = [delta];
+		const nabla_w = [ml.Matrix.fromVecMultVec(delta, this.layers[this.layers.length - 2].zs)];
 
-		for (let i = this.layers.length - 1; i >= 0; i--) {
+		for (let i = this.layers.length - 2; i >= 0; i--) {
 			const prev_activations = i == 0 ? input : Layer.sigmoid(this.layers[i - 1].zs);
-			const ret = this.layers[i].backprop(prev_activations, delta);
+			const ret = this.layers[i].backprop(prev_activations, delta, this.layers[i + 1].weights);
 			delta = ret.delta;
 			nabla_b.unshift(ret.nabla_b);
 			nabla_w.unshift(ret.nabla_w);
 		}
 
-		return { nabla_b, nabla_w };
+		return { cost, nabla_b, nabla_w };
 
+	}
+
+	cost(activations: ml.Vector, target: ml.Vector) {
+		const dv = ml.Vector.sub(activations, target);
+		return 1 / 2 * ml.Vector.dot(dv, dv);
 	}
 
 	// derivative of 1/2 * (a - y)^2
@@ -160,13 +166,13 @@ export class Layer {
 		return Layer.sigmoid(raw);
 	}
 
-	backprop(prev_activations: ml.Vector, delta: ml.Vector): {
+	backprop(prev_activations: ml.Vector, delta: ml.Vector, next_weights: ml.Matrix): {
 		delta: ml.Vector, nabla_b: ml.Vector, nabla_w: ml.Matrix
 	} {
-		const sp = Layer.sigmoid_prime(prev_activations);
-		const new_delta = ml.Vector.hadamard(ml.Matrix.multTransposeVector(this.weights, delta), sp);
-		const nabla_b = new_delta;
-		const nabla_w = ml.Matrix.fromVecMultVec(prev_activations, new_delta);
+		const sp = Layer.sigmoid_prime(this.zs);
+		const new_delta = ml.Vector.hadamard(ml.Matrix.multTransposeVector(next_weights, delta), sp);
+		const nabla_b = new_delta.clone();
+		const nabla_w = ml.Matrix.fromVecMultVec(new_delta, prev_activations);
 		return { delta: new_delta, nabla_b, nabla_w };
 	}
 
