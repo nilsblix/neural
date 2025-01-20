@@ -1,7 +1,10 @@
 import * as gui from "./gui/gui.ts";
 import { Engine } from "./nnmanager.ts";
 import { ImageDrawer } from "./imagedrawer.ts";
+import { Network } from "./neural_network/nnetwork.ts";
 import * as ml from "./mathlib/math.ts";
+
+import { json1 } from "./neural_network/examples.ts";
 
 const enum UiAction {
 	placeholder,
@@ -11,9 +14,40 @@ const enum UiAction {
 	render_image,
 	increment_img_id,
 	decrement_img_id,
+	log_json_current_network,
+	load_network_1,
 }
 
-const engine = new Engine(33);
+//const vec = new ml.Vector(new Float32Array([1, 2, 3]));
+//
+//const json_vec = vec.toJSON();
+//const parsed_vec = ml.Vector.fromJSON(json_vec);
+//
+//console.log("orig:", vec);
+//console.log("json:", json_vec);
+//console.log("parsed:", parsed_vec);
+//
+//const mat = new ml.Matrix([
+//	new ml.Vector(new Float32Array([1, 2, 3])),
+//	new ml.Vector(new Float32Array([4, 5, 6])),
+//	new ml.Vector(new Float32Array([7, 8, 9])),
+//]);
+//
+//const json_mat = mat.toJSON();
+//const parsed_mat = ml.Matrix.fromJSON(json_mat);
+//
+//console.log("");
+//
+//console.log("mat orig:", mat);
+//console.log("mat json:", json_mat);
+//console.log("mat parsed:", parsed_mat);
+//
+//console.log("");
+//
+//console.log("ORIG mat * vec:", (ml.Matrix.multVector(mat, vec)));
+//console.log("PARSED mat * vec:", (ml.Matrix.multVector(parsed_mat, parsed_vec)));
+
+const engine = new Engine(34);
 const image_drawer = new ImageDrawer("f32", 28 * 28);
 
 const c = <gui.REND>gui.canvas.getContext("2d");
@@ -36,11 +70,15 @@ const update = () => {
 	gui.updateCanvasSizing();
 	const stack = new gui.Stack<gui.N<UiAction>>();
 
-	const w = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "neural test", width: 300, height: 400 });
+	const w = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "neural test", width: 300, height: 600 });
 
 	w.makeButton(c, UiAction.increment_img_id, "inc imagd id");
 	w.makeButton(c, UiAction.decrement_img_id, "inc imagd id");
 	w.makeButton(c, UiAction.render_image, "render transformed image, id=" + img_id);
+
+	w.makeLabel(c, null, "");
+	w.makeButton(c, UiAction.log_json_current_network, "log current network as json");
+	w.makeButton(c, UiAction.load_network_1, "load network 1 (random)");
 
 	w.makeLabel(c, null, " ");
 	w.makeButton(c, UiAction.begin_training, "begin training");
@@ -76,7 +114,12 @@ const update = () => {
 		case UiAction.switch_draw_mode:
 			image_drawer.mode = image_drawer.mode == "draw" ? "erase" : "draw";
 			break;
-
+		case UiAction.log_json_current_network:
+			console.log("'" + JSON.stringify(engine.network.toObject()) + "'");
+			break;
+		case UiAction.load_network_1:
+			engine.network = Network.fromObject(JSON.parse(json1));
+			break;
 	}
 
 	if (JSON.stringify(input_state.active_widget_loc) == JSON.stringify([]) && input_state.mouse_down) {

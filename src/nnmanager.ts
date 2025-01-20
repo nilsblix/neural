@@ -17,7 +17,7 @@ export class Engine {
 	private readonly input_size = this.img_width * this.img_width;
 	private readonly output_size = 10;
 
-	private readonly num_epochs = 30; // 30
+	private readonly num_epochs = 10; // 30
 	private readonly batch_size = 80;
 	private readonly train_rounds = 650;
 
@@ -25,7 +25,7 @@ export class Engine {
 
 	constructor(seed: number) {
 		this.rng = new ml.PCG32(BigInt(128 * seed));
-		this.network = new Network(seed, this.input_size, [80, 40, 10]);
+		this.network = new Network(seed, this.input_size, [16, 16, 10]);
 		this.data = new MnistData();
 		this.data.load();
 	}
@@ -52,9 +52,9 @@ export class Engine {
 		const augmented = new Float32Array(image.elements.length);
 		const width = this.img_width;
 
-		// Random translation offsets (-4 to 4 pixels)
-		const dx = Math.floor(Math.random() * 5) - 2;
-		const dy = Math.floor(Math.random() * 5) - 2;
+		// Random translation offsets (-4 to 4 pixels) standard -- * 5 - 2
+		const dx = Math.floor(Math.random() * 10) - 4;
+		const dy = Math.floor(Math.random() * 10) - 4;
 
 		// Random rotation angle (-30 to 30 degrees)
 		const angle = (Math.random() * 30 - 15) * (Math.PI / 180);

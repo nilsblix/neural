@@ -4,6 +4,10 @@ import { Batch } from "../nnmanager.ts";
 export class Network {
 	layers: Layer[];
 
+	static readonly object_type: {
+		layers: Array<typeof Layer.object_type>;
+	}
+
 	/**
 	 * layers goes from the one after input to (includes) output
 	 * layers do not contain any information about activation, the activations just gets passed through the network
@@ -15,6 +19,30 @@ export class Network {
 		for (let l = 0; l < layer_sizes.length; l++) {
 			this.layers.push(new Layer(rng, layer_sizes[l], l == 0 ? input_size : layer_sizes[l - 1]));
 		}
+	}
+
+	toObject(): typeof Network.object_type {
+		const arr = [];
+		for (let i = 0; i < this.layers.length; i++) {
+			arr.push(this.layers[i].toObject());
+		}
+		return {
+			layers: arr
+		}
+	}
+
+	static fromObject(data: typeof Network.object_type) {
+		const net = Network.empty();
+		const lays = [];
+		for (let i = 0; i < data.layers.length; i++) {
+			lays.push(Layer.fromObject(data.layers[i]));
+		}
+		net.layers = lays;
+		return net;
+	}
+
+	static empty() {
+		return new Network(0, 0, []);
 	}
 
 	evaluate(input: ml.Vector) {
@@ -147,8 +175,21 @@ export class Layer {
 
 	zs: ml.Vector; // raw activations (without sigmoid)
 
+	static readonly object_type: {
+		weights: typeof ml.Matrix.object_type;
+		biases: typeof ml.Vector.object_type;
+		zs: typeof ml.Vector.object_type;
+	}
+
 	// weights and biases gets initialized to [-1, 1] ?
-	constructor(rng: ml.PCG32, num_neurons: number, prev_num_neurons: number) {
+	constructor(rng: null | ml.PCG32, num_neurons: number, prev_num_neurons: number) {
+		if (rng == null) {
+			this.weights = new ml.Matrix([])
+			const empty_vec = new ml.Vector(new Float32Array([]));
+			this.biases = empty_vec.clone();
+			this.zs = empty_vec.clone();
+			return;
+		}
 		const elem = [];
 		const bs = [];
 		for (let i = 0; i < num_neurons; i++) {
@@ -165,6 +206,26 @@ export class Layer {
 		this.biases = new ml.Vector(new Float32Array(bs));
 
 		this.zs = ml.Vector.fromType(this.biases.type, this.biases.length);
+	}
+
+	toObject(): typeof Layer.object_type {
+		return {
+			weights: this.weights.toObject(),
+			biases: this.biases.toObject(),
+			zs: this.zs.toObject(),
+		}
+	}
+
+	static fromObject(data: typeof Layer.object_type) {
+		const lay = Layer.empty();
+		lay.weights = ml.Matrix.fromObject(data.weights);
+		lay.biases = ml.Vector.fromObject(data.biases);
+		lay.zs = ml.Vector.fromObject(data.zs);
+		return lay;
+	}
+
+	static empty() {
+		return new Layer(null, 0, 0);
 	}
 
 	// 1 / (1 + e^-x)
@@ -214,6 +275,5 @@ export class Layer {
 		const nabla_w = ml.Matrix.fromVecMultVec(new_delta, prev_activations);
 		return { delta: new_delta, nabla_b, nabla_w };
 	}
-
 
 }

@@ -72,6 +72,11 @@ export class Vector {
 	elements: Float32Array | Float64Array;
 	type: "f32" | "f64";
 
+	static readonly object_type: {
+		type: "f32" | "f64";
+		elements: Array<number>;
+	};
+
 	constructor(elements: Float32Array | Float64Array) {
 		this.elements = elements;
 		this.type = elements instanceof Float32Array ? "f32" : "f64";
@@ -80,6 +85,19 @@ export class Vector {
 	get length() {
 		return this.elements.length;
 	}
+
+	toObject(): typeof Vector.object_type {
+		return {
+			type: this.type,
+			elements: Array.from(this.elements),
+		}
+	}
+
+	static fromObject(data: typeof Vector.object_type) {
+		const vec = new Vector(data.type == "f32" ? new Float32Array(data.elements) : new Float64Array(data.elements));
+		return vec;
+	}
+
 
 	clone() {
 		const ret = Vector.fromType(this.type, this.length);
@@ -181,6 +199,11 @@ export class Matrix {
 	elements: Vector[];
 	type: "f32" | "f64";
 
+	static readonly object_type: {
+		type: "f32" | "f64";
+		elements: Array<typeof Vector.object_type>;
+	};
+
 	constructor(elements: Vector[]) {
 		if (elements.length > 0) {
 			this.elements = elements;
@@ -189,6 +212,28 @@ export class Matrix {
 			this.type = "f32";
 			this.elements = [];
 		}
+	}
+
+	toObject(): typeof Matrix.object_type {
+		const elems = [];
+		for (let i = 0; i < this.elements.length; i++) {
+			elems.push(this.elements[i].toObject());
+		}
+		return {
+			type: this.type,
+			elements: elems,
+		}
+	}
+
+	static fromObject(data: typeof Matrix.object_type) {
+		const mat = new Matrix([]);
+		mat.type = data.type;
+		const vecs = [];
+		for (let i = 0; i < data.elements.length; i++) {
+			vecs.push(Vector.fromObject(data.elements[i]));
+		}
+		mat.elements = vecs;
+		return mat;
 	}
 
 	/**
