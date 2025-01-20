@@ -18,14 +18,14 @@ export class Engine {
 	private readonly output_size = 10;
 
 	private readonly num_epochs = 10; // 30
-	private readonly batch_size = 80;
-	private readonly train_rounds = 650;
+	private readonly batch_size = 100;
+	private readonly train_rounds = 600;
 
 	private readonly eta = 0.6;
 
 	constructor(seed: number) {
 		this.rng = new ml.PCG32(BigInt(128 * seed));
-		this.network = new Network(seed, this.input_size, [16, 16, 10]);
+		this.network = new Network(seed, this.input_size, [64, 32, 10]);
 		this.data = new MnistData();
 		this.data.load();
 	}
