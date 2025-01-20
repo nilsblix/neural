@@ -19,7 +19,7 @@ export class ImageDrawer {
 					for (let col = id_y - 1; col <= id_y + 1; col++) {
 						const middle = row == id_x && col == id_y;
 						var value = this.image_input.elements[row * cell_width + col];
-						this.image_input.elements[row * cell_width + col] = middle ? 1.0 : Math.min(1.0, value + 0.01);
+						this.image_input.elements[row * cell_width + col] = middle ? 1.0 : Math.min(1.0, value + 0.03);
 					}
 				}
 				break;

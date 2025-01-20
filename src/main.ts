@@ -5,15 +5,15 @@ import * as ml from "./mathlib/math.ts";
 
 const enum UiAction {
 	placeholder,
-	increment,
-	decrement,
-	drag_seed,
 	begin_training,
 	log_network,
 	switch_draw_mode,
+	render_image,
+	increment_img_id,
+	decrement_img_id,
 }
 
-const engine = new Engine(16);
+const engine = new Engine(33);
 const image_drawer = new ImageDrawer("f32", 28 * 28);
 
 const c = <gui.REND>gui.canvas.getContext("2d");
@@ -22,11 +22,10 @@ const input_state = new gui.InputState(gui.canvas, 0, 0)
 const nncanvas = <HTMLCanvasElement>document.getElementById("mnist-canvas");
 const nnc = nncanvas.getContext("2d");
 
-let num = 0;
-let seed = 1;
-
 let nn_output = ml.Vector.fromType("f32", 10);
 let highest_activation = -1;
+
+let img_id = 1;
 
 const update = () => {
 
@@ -39,12 +38,9 @@ const update = () => {
 
 	const w = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "neural test", width: 300, height: 400 });
 
-	w.makeLabel(c, null, "num = " + num);
-	w.makeButton(c, UiAction.increment, "increment");
-	w.makeButton(c, UiAction.decrement, "decrement");
-
-	w.makeLabel(c, null, "seed = " + seed);
-	w.makeDraggable(c, UiAction.drag_seed, "drag seed");
+	w.makeButton(c, UiAction.increment_img_id, "inc imagd id");
+	w.makeButton(c, UiAction.decrement_img_id, "inc imagd id");
+	w.makeButton(c, UiAction.render_image, "render transformed image, id=" + img_id);
 
 	w.makeLabel(c, null, " ");
 	w.makeButton(c, UiAction.begin_training, "begin training");
@@ -61,14 +57,15 @@ const update = () => {
 	const action = ret.action;
 
 	switch (action) {
-		case UiAction.increment:
-			num++;
+		case UiAction.render_image:
+			const img = engine.getImage(img_id);
+			image_drawer.image_input = engine.transformImage(img.xs);
 			break;
-		case UiAction.decrement:
-			num--;
+		case UiAction.increment_img_id:
+			img_id++;
 			break;
-		case UiAction.drag_seed:
-			seed = gui.updateDraggableValue(seed, input_state, 1.0);
+		case UiAction.decrement_img_id:
+			img_id--;
 			break;
 		case UiAction.begin_training:
 			engine.train();

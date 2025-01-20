@@ -19,7 +19,8 @@ export class Network {
 
 	evaluate(input: ml.Vector) {
 		const output = this.feedforward(input);
-		return this.softmax(output);
+		//return this.softmax(output);
+		return output;
 	}
 
 	processMiniBatch(mini_batch: Batch[], eta: number) {

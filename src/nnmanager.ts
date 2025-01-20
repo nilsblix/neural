@@ -17,15 +17,15 @@ export class Engine {
 	private readonly input_size = this.img_width * this.img_width;
 	private readonly output_size = 10;
 
-	private readonly num_epochs = 20; // 30
-	private readonly batch_size = 100;
-	private readonly train_rounds = 500;
+	private readonly num_epochs = 30; // 30
+	private readonly batch_size = 80;
+	private readonly train_rounds = 650;
 
 	private readonly eta = 0.6;
 
 	constructor(seed: number) {
 		this.rng = new ml.PCG32(BigInt(128 * seed));
-		this.network = new Network(seed, this.input_size, [64, 16, 10]);
+		this.network = new Network(seed, this.input_size, [80, 40, 10]);
 		this.data = new MnistData();
 		this.data.load();
 	}
@@ -52,15 +52,15 @@ export class Engine {
 		const augmented = new Float32Array(image.elements.length);
 		const width = this.img_width;
 
-		// Random translation offsets (-2 to 2 pixels)
-		const dx = Math.floor(this.rng.pcg32_0to1() * 5) - 2;
-		const dy = Math.floor(this.rng.pcg32_0to1() * 5) - 2;
+		// Random translation offsets (-4 to 4 pixels)
+		const dx = Math.floor(Math.random() * 5) - 2;
+		const dy = Math.floor(Math.random() * 5) - 2;
 
-		// Random rotation angle (-15 to 15 degrees)
-		const angle = (this.rng.pcg32_0to1() * 30 - 15) * (Math.PI / 180);
+		// Random rotation angle (-30 to 30 degrees)
+		const angle = (Math.random() * 30 - 15) * (Math.PI / 180);
 
 		// Noise level (0 to 0.1)
-		const noiseLevel = this.rng.pcg32_0to1() * 0.1;
+		const noiseLevel = Math.random() * 0.1;
 
 		// Transformation calculations
 		const cosA = Math.cos(angle);
@@ -84,7 +84,7 @@ export class Engine {
 				}
 
 				// Add random noise
-				augmented[y * width + x] += noiseLevel * (this.rng.pcg32_0to1() - 0.5);
+				augmented[y * width + x] += noiseLevel * (Math.random() - 0.5);
 				augmented[y * width + x] = Math.min(1, Math.max(0, augmented[y * width + x])); // Clip values to [0, 1]
 			}
 		}
@@ -111,8 +111,8 @@ export class Engine {
 				const ret = this.network.processMiniBatch(batches, this.eta);
 				avg_cost += ret.avg_cost;
 				avg_perc += ret.num_correct / this.batch_size;
-				//if (r % 100 == 0)
-				//	console.log("ON ROUND = ", r);
+				if (r % 100 == 0)
+					console.log("ON ROUND = ", r);
 			}
 			avg_cost /= this.train_rounds;
 			avg_perc /= this.train_rounds;
