@@ -17,15 +17,15 @@ export class Engine {
 	private readonly input_size = this.img_width * this.img_width;
 	private readonly output_size = 10;
 
-	private readonly num_epochs = 30; // 30
-	private readonly batch_size = 25;
-	private readonly train_rounds = 2000;
+	private readonly num_epochs = 20; // 30
+	private readonly batch_size = 50;
+	private readonly train_rounds = 1000;
 
-	private readonly eta = 0.8;
+	//private readonly eta = 0.4;
 
 	constructor(seed: number) {
 		this.rng = new ml.PCG32(BigInt(128 * seed));
-		this.network = new Network(seed, this.input_size, [64, 32, 10]);
+		this.network = new Network(seed, this.input_size, [100, 10]);
 		this.data = new MnistData();
 		this.data.load();
 	}
@@ -57,10 +57,7 @@ export class Engine {
 		const dy = Math.floor(Math.random() * 10) - 4;
 
 		// Random rotation angle (-30 to 30 degrees)
-		const angle = (Math.random() * 30 - 15) * (Math.PI / 180);
-
-		// Noise level (0 to 0.1)
-		const noiseLevel = Math.random() * 0.1;
+		const angle = (Math.random() * 15 - 15) * (Math.PI / 180);
 
 		// Transformation calculations
 		const cosA = Math.cos(angle);
@@ -83,8 +80,6 @@ export class Engine {
 					augmented[y * width + x] = image.elements[ny * width + nx];
 				}
 
-				// Add random noise
-				augmented[y * width + x] += noiseLevel * (Math.random() - 0.5);
 				augmented[y * width + x] = Math.min(1, Math.max(0, augmented[y * width + x])); // Clip values to [0, 1]
 			}
 		}
@@ -94,9 +89,11 @@ export class Engine {
 
 	train() {
 		console.time("train");
+		const a = 32.0;
 		for (let e = 0; e < this.num_epochs; e++) {
+			const eta = a / (e + a);
 			console.log("========================================")
-			console.log("EPOCH: " + e);
+			console.log("EPOCH =", e, "   ETA =", eta);
 
 			var avg_cost = 0.0;
 			var avg_perc = 0.0;
@@ -105,10 +102,11 @@ export class Engine {
 				for (let i = 0; i < this.batch_size; i++) {
 					const batch = this.getImage(r * this.batch_size + i);
 					const transformed = this.transformImage(batch.xs);
+					//const transformed = batch.xs;
 					batches.push({ xs: transformed, ys: batch.ys });
 				}
 
-				const ret = this.network.processMiniBatch(batches, this.eta);
+				const ret = this.network.processMiniBatch(batches, eta);
 				avg_cost += ret.avg_cost;
 				avg_perc += ret.num_correct / this.batch_size;
 				if (r % 100 == 0)

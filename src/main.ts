@@ -4,7 +4,7 @@ import { ImageDrawer } from "./imagedrawer.ts";
 import { Network } from "./neural_network/nnetwork.ts";
 import * as ml from "./mathlib/math.ts";
 
-import { json1, json_728_64_32_10_88perc } from "./neural_network/examples.ts";
+import * as demos from "./neural_network/examples.ts";
 
 const enum UiAction {
 	placeholder,
@@ -18,6 +18,8 @@ const enum UiAction {
 	log_json_current_network,
 	load_network_1,
 	load_network_2,
+	load_network_3,
+	load_network_4,
 	toggle_softmax,
 }
 
@@ -85,6 +87,8 @@ const update = () => {
 	wtraining.makeLabel(c, null, "Current network options ==> ");
 	wtraining.makeButton(c, UiAction.load_network_1, "load network 1 (random)");
 	wtraining.makeButton(c, UiAction.load_network_2, "load network 2 88% (728 -> 64 -> 32 -> 10)");
+	wtraining.makeButton(c, UiAction.load_network_3, "load network 3 81% (728 -> 48 -> 16 -> 10)");
+	wtraining.makeButton(c, UiAction.load_network_4, "load network 4 87% (728 -> 48 -> 16 -> 10)");
 
 	wtraining.makeLabel(c, null, " ");
 	wtraining.makeLabel(c, null, "Training options ==> ");
@@ -123,11 +127,19 @@ const update = () => {
 			console.log("'" + JSON.stringify(engine.network.toObject()) + "'");
 			break;
 		case UiAction.load_network_1:
-			engine.network = Network.fromObject(JSON.parse(json1));
+			engine.network = Network.fromObject(JSON.parse(demos.json1));
 			nn_output = engine.evaluate(image_drawer.image_input, softmax);
 			break;
 		case UiAction.load_network_2:
-			engine.network = Network.fromObject(JSON.parse(json_728_64_32_10_88perc));
+			engine.network = Network.fromObject(JSON.parse(demos.json_728_64_32_10_88perc));
+			nn_output = engine.evaluate(image_drawer.image_input, softmax);
+			break;
+		case UiAction.load_network_3:
+			engine.network = Network.fromObject(JSON.parse(demos.json_basic_784_48_16_10));
+			nn_output = engine.evaluate(image_drawer.image_input, softmax);
+			break;
+		case UiAction.load_network_4:
+			engine.network = Network.fromObject(JSON.parse(demos.json_784_48_16_10_87perc));
 			nn_output = engine.evaluate(image_drawer.image_input, softmax);
 			break;
 		case UiAction.toggle_softmax:
