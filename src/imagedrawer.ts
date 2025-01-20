@@ -9,29 +9,36 @@ export class ImageDrawer {
 		this.image_input = ml.Vector.fromType(type, image_vec_length);
 	}
 
-	updateInput(canv_position: { x: number, y: number }, cell_width: number) {
+	updateInput(canv_position: { x: number, y: number }, cell_width: number, brush_size: number) {
 		const id_x = Math.floor(canv_position.x / cell_width);
 		const id_y = Math.floor(canv_position.y / cell_width);
 
-		switch (this.mode) {
-			case "draw":
-				for (let row = id_x - 1; row <= id_x + 1; row++) {
-					for (let col = id_y - 1; col <= id_y + 1; col++) {
-						const middle = row == id_x && col == id_y;
-						var value = this.image_input.elements[row * cell_width + col];
-						this.image_input.elements[row * cell_width + col] = middle ? 1.0 : Math.min(1.0, value + 0.03);
-					}
-				}
-				break;
-			case "erase":
+		const side_length = Math.sqrt(this.image_input.length);
+		if (id_x < 0 || id_x >= side_length)
+			return;
+		if (id_y < 0 || id_y >= side_length)
+			return;
 
-				for (let row = id_x - 1; row <= id_x + 1; row++) {
-					for (let col = id_y - 1; col <= id_y + 1; col++) {
-						//const middle = row == id_x && col == id_y;
-						this.image_input.elements[row * cell_width + col] = 0.0;
+		for (let col = Math.floor(id_x - brush_size); col <= id_x + brush_size; col++) {
+			for (let row = Math.floor(id_y - brush_size); row <= id_y + brush_size; row++) {
+				const idx = row * cell_width + col;
+
+				const dist = Math.sqrt((col - id_x) ** 2 + (row - id_y) ** 2);
+
+				if (dist <= brush_size) {
+					switch (this.mode) {
+						case "draw":
+							const draw_value = Math.max(0, 1 - dist / brush_size);
+							this.image_input.elements[idx] = Math.min(1.0, this.image_input.elements[idx] + draw_value * 0.06);
+							break;
+						case "erase":
+							this.image_input.elements[idx] = 0;
+							break;
 					}
+
 				}
-				break;
+			}
+
 		}
 	}
 }

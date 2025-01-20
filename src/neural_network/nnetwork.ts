@@ -45,10 +45,14 @@ export class Network {
 		return new Network(0, 0, []);
 	}
 
-	evaluate(input: ml.Vector) {
+	evaluateRaw(input: ml.Vector) {
 		const output = this.feedforward(input);
-		//return this.softmax(output);
 		return output;
+	}
+
+	evaluateSoftmaxxed(input: ml.Vector) {
+		const output = this.evaluateRaw(input);
+		return this.softmax(output);
 	}
 
 	processMiniBatch(mini_batch: Batch[], eta: number) {
@@ -158,7 +162,8 @@ export class Network {
 	softmax(activations: ml.Vector) {
 		var sum = 0.0;
 		for (let i = 0; i < activations.length; i++) {
-			sum += Math.exp(activations.elements[i]);
+			const act = activations.elements[i];
+			sum += Math.exp(act);
 		}
 		const vec = ml.Vector.fromType(activations.type, activations.length);
 		for (let i = 0; i < vec.length; i++) {
@@ -195,12 +200,12 @@ export class Layer {
 		for (let i = 0; i < num_neurons; i++) {
 			const w_i = [];
 			for (let k = 0; k < prev_num_neurons; k++) {
-				w_i.push(rng.pcg32_0to1() * 2 - 1);
+				w_i.push(Math.random() * 2 - 1);
 			}
 			const weight_vec = new ml.Vector(new Float32Array(w_i));
 			elem.push(weight_vec);
 
-			bs.push(rng.pcg32_0to1() * 2 - 1);
+			bs.push(Math.random() * 2 - 1);
 		}
 		this.weights = new ml.Matrix(elem);
 		this.biases = new ml.Vector(new Float32Array(bs));

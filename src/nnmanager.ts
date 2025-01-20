@@ -17,11 +17,11 @@ export class Engine {
 	private readonly input_size = this.img_width * this.img_width;
 	private readonly output_size = 10;
 
-	private readonly num_epochs = 10; // 30
-	private readonly batch_size = 100;
-	private readonly train_rounds = 600;
+	private readonly num_epochs = 30; // 30
+	private readonly batch_size = 25;
+	private readonly train_rounds = 2000;
 
-	private readonly eta = 0.6;
+	private readonly eta = 0.8;
 
 	constructor(seed: number) {
 		this.rng = new ml.PCG32(BigInt(128 * seed));
@@ -44,8 +44,8 @@ export class Engine {
 		return img;
 	}
 
-	evaluate(input: ml.Vector) {
-		return this.network.evaluate(input);
+	evaluate(input: ml.Vector, softmax?: boolean) {
+		return softmax != undefined && softmax ? this.network.evaluateSoftmaxxed(input) : this.network.evaluateRaw(input);
 	}
 
 	transformImage(image: ml.Vector): ml.Vector {
