@@ -39,7 +39,12 @@ export class MnistData {
 		const img = new Image();
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		const imgRequest = new Promise((resolve, reject) => {
+
+		if (ctx == undefined) {
+			throw new Error("mnist ctx did not load properly");
+		}
+
+		const imgRequest = new Promise<void>((resolve) => {
 			img.crossOrigin = '';
 			img.onload = () => {
 				img.width = img.naturalWidth;
@@ -75,11 +80,13 @@ export class MnistData {
 			img.src = MNIST_IMAGES_SPRITE_PATH;
 		});
 
-		const labelsRequest = fetch(MNIST_LABELS_PATH);
-		const [imgResponse, labelsResponse] =
+		const labelsRequest = fetch(MNIST_LABELS_PATH).then((response) => response.arrayBuffer());
+		const [imgRequestResult, labelsResponseArrayBuffer] =
 			await Promise.all([imgRequest, labelsRequest]);
 
-		this.datasetLabels = new Uint8Array(await labelsResponse.arrayBuffer());
+		imgRequestResult;
+
+		this.datasetLabels = new Uint8Array(labelsResponseArrayBuffer);
 
 		// Slice the the images and labels into train and test sets.
 		this.trainImages =

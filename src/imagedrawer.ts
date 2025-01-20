@@ -9,19 +9,18 @@ export class ImageDrawer {
 		this.image_input = ml.Vector.fromType(type, image_vec_length);
 	}
 
-	updateInput(canv_position: { x: number, y: number }, cell_width: number, brush_size: number) {
-		const id_x = Math.floor(canv_position.x / cell_width);
-		const id_y = Math.floor(canv_position.y / cell_width);
+	updateInput(canv_position: { x: number, y: number }, num_cells: number, brush_size: number) {
+		const id_x = Math.floor(canv_position.x / num_cells);
+		const id_y = Math.floor(canv_position.y / num_cells);
 
-		const side_length = Math.sqrt(this.image_input.length);
-		if (id_x < 0 || id_x >= side_length)
+		if (id_x < 0 || id_x >= num_cells)
 			return;
-		if (id_y < 0 || id_y >= side_length)
+		if (id_y < 0 || id_y >= num_cells)
 			return;
 
 		for (let col = Math.floor(id_x - brush_size); col <= id_x + brush_size; col++) {
 			for (let row = Math.floor(id_y - brush_size); row <= id_y + brush_size; row++) {
-				const idx = row * cell_width + col;
+				const idx = row * num_cells + col;
 
 				const dist = Math.sqrt((col - id_x) ** 2 + (row - id_y) ** 2);
 

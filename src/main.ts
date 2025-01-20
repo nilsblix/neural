@@ -140,7 +140,14 @@ const update = () => {
 		const rect = nnc.canvas.getBoundingClientRect();
 		const x = input_state.mouse_position.x - rect.left;
 		const y = input_state.mouse_position.y - rect.top;
-		image_drawer.updateInput({ x: x, y: y }, 28, brush_size);
+
+		const x01 = x / rect.width;
+		const y01 = y / rect.height;
+
+		const x0c = x01 * nnc.canvas.width;
+		const y0c = y01 * nnc.canvas.height;
+
+		image_drawer.updateInput({ x: x0c, y: y0c }, 28, brush_size);
 		nn_output = engine.evaluate(image_drawer.image_input);
 	}
 

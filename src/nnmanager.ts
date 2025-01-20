@@ -124,8 +124,8 @@ export class Engine {
 	renderImage(img: ml.Vector, ctx: CanvasRenderingContext2D) {
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-		ctx.canvas.width = 800;
-		ctx.canvas.height = 800;
+		//ctx.canvas.width = 800;
+		//ctx.canvas.height = 800;
 
 		const width = ctx.canvas.width / this.img_width;
 		const height = ctx.canvas.height / this.img_width;
