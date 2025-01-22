@@ -9,7 +9,7 @@ export class ImageDrawer {
 		this.image_input = ml.Vector.fromType(type, image_vec_length);
 	}
 
-	updateInput(canv_position: { x: number, y: number }, num_cells: number, brush_size: number) {
+	updateInput(canv_position: { x: number, y: number }, num_cells: number, brush_size: number, add_rate: number) {
 		const id_x = Math.floor(canv_position.x / num_cells);
 		const id_y = Math.floor(canv_position.y / num_cells);
 
@@ -28,7 +28,7 @@ export class ImageDrawer {
 					switch (this.mode) {
 						case "draw":
 							const draw_value = Math.max(0, 1 - dist / brush_size);
-							this.image_input.elements[idx] = Math.min(1.0, this.image_input.elements[idx] + draw_value * 0.06);
+							this.image_input.elements[idx] = Math.min(1.0, this.image_input.elements[idx] + draw_value * add_rate);
 							break;
 						case "erase":
 							this.image_input.elements[idx] = 0;

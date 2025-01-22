@@ -11,6 +11,7 @@ const enum UiAction {
 	begin_training,
 	log_network,
 	drag_brush_size,
+	drag_draw_rate,
 	switch_draw_mode,
 	render_image,
 	increment_img_id,
@@ -21,6 +22,7 @@ const enum UiAction {
 	load_network_3,
 	load_network_4,
 	toggle_softmax,
+
 }
 
 const engine = new Engine(34);
@@ -35,7 +37,8 @@ const nnc = nncanvas.getContext("2d");
 let nn_output = ml.Vector.fromType("f32", 10);
 
 let img_id = 1;
-let brush_size = 1;
+let brush_size = 2.0;
+let draw_rate = 0.1;
 let softmax = false;
 
 function getSortedOutputArray() {
@@ -60,9 +63,10 @@ const update = () => {
 	gui.updateCanvasSizing();
 	const stack = new gui.Stack<gui.N<UiAction>>();
 
-	const wdraw = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "iteractivity options", width: 260, height: 210 });
+	const wdraw = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "interactivity options", width: 260, height: 210 });
 	wdraw.makeLabel(c, null, "drawing options");
 	wdraw.makeDraggable(c, UiAction.drag_brush_size, "brush size = " + brush_size);
+	wdraw.makeDraggable(c, UiAction.drag_draw_rate, "draw rate = " + draw_rate);
 	wdraw.makeButton(c, UiAction.switch_draw_mode, "mode: " + image_drawer.mode);
 
 	wdraw.makeLabel(c, null, " ");
@@ -123,6 +127,9 @@ const update = () => {
 		case UiAction.drag_brush_size:
 			brush_size = Number(gui.updateDraggableValue(brush_size, input_state, 0.02, { min: 0, max: 10 }).toFixed(3));
 			break;
+		case UiAction.drag_draw_rate:
+			draw_rate = Number(gui.updateDraggableValue(draw_rate, input_state, 0.005, { min: 0, max: 1 }));
+			break;
 		case UiAction.log_json_current_network:
 			console.log("'" + JSON.stringify(engine.network.toObject()) + "'");
 			break;
@@ -159,7 +166,7 @@ const update = () => {
 		const x0c = x01 * nnc.canvas.width;
 		const y0c = y01 * nnc.canvas.height;
 
-		image_drawer.updateInput({ x: x0c, y: y0c }, 28, brush_size);
+		image_drawer.updateInput({ x: x0c, y: y0c }, 28, brush_size, draw_rate);
 		nn_output = engine.evaluate(image_drawer.image_input);
 	}
 
