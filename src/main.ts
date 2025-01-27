@@ -1,4 +1,5 @@
-import * as gui from "./gui/gui.ts";
+//import * as gui from "./gui/gui.ts";
+import * as gui from "./nvb-imgui/src/gui/gui.ts";
 import { Engine } from "./nnmanager.ts";
 import { ImageDrawer } from "./imagedrawer.ts";
 import { Network } from "./neural_network/nnetwork.ts";
@@ -27,9 +28,6 @@ const enum UiAction {
 
 const engine = new Engine(34);
 const image_drawer = new ImageDrawer("f32", 28 * 28);
-
-const c = <gui.REND>gui.canvas.getContext("2d");
-const input_state = new gui.InputState(gui.canvas, 0, 0)
 
 const nncanvas = <HTMLCanvasElement>document.getElementById("mnist-canvas");
 const nnc = nncanvas.getContext("2d");
@@ -63,44 +61,60 @@ const update = () => {
 	gui.updateCanvasSizing();
 	const stack = new gui.Stack<gui.N<UiAction>>();
 
-	const wdraw = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "interactivity options", width: 260, height: 210 });
-	wdraw.makeLabel(c, null, "drawing options");
-	wdraw.makeDraggable(c, UiAction.drag_brush_size, "brush size = " + brush_size);
-	wdraw.makeDraggable(c, UiAction.drag_draw_rate, "draw rate = " + draw_rate);
-	wdraw.makeButton(c, UiAction.switch_draw_mode, "mode: " + image_drawer.mode);
+	const wdraw = stack.makeWindow(gui.c, gui.input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 20, y: 40, title: "interactivity options", width: 280, height: 250 });
+	wdraw.makeLabel(gui.c, null, "drawing options");
+	wdraw.makeDraggable(gui.c, UiAction.drag_brush_size, "brush size = " + brush_size);
+	wdraw.makeDraggable(gui.c, UiAction.drag_draw_rate, "draw rate = " + draw_rate);
+	wdraw.makeButton(gui.c, UiAction.switch_draw_mode, "mode: " + image_drawer.mode);
 
-	wdraw.makeLabel(c, null, " ");
-	wdraw.makeLabel(c, null, "render mnist images: ");
-	wdraw.makeButton(c, UiAction.increment_img_id, "inc imagd id");
-	wdraw.makeButton(c, UiAction.decrement_img_id, "dec imagd id");
-	wdraw.makeButton(c, UiAction.render_image, "render transformed image, id=" + img_id);
+	wdraw.makeLabel(gui.c, null, " ");
+	wdraw.makeLabel(gui.c, null, "render mnist images: ");
+	wdraw.makeButton(gui.c, UiAction.increment_img_id, "inc imagd id");
+	wdraw.makeButton(gui.c, UiAction.decrement_img_id, "dec imagd id");
+	wdraw.makeButton(gui.c, UiAction.render_image, "render transformed image, id=" + img_id);
 
-	const wtraining = stack.makeWindow(c, input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 800, title: "neural network options", y: 220, height: 500, width: 600 });
+	const wtraining = stack.makeWindow(gui.c, gui.input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 10, title: "neural network options", y: 320, height: 465, width: 495 });
 
-	wtraining.setMode("two columns", { min_width: 250, max_width: 400 });
-	wtraining.makeButton(c, UiAction.toggle_softmax, "softmax = " + softmax);
-	wtraining.makeLabel(c, null, "Results ==> ");
-	wtraining.setMode("normal");
+	wtraining.makeButton(gui.c, UiAction.toggle_softmax, "softmax = " + softmax);
+	wtraining.makeLabel(gui.c, null, "Results ==> ");
 
 	const sorted_output = getSortedOutputArray();
 	for (const { digit, probability } of sorted_output) {
-		wtraining.makeLabel(c, null, digit + " --> " + (100 * probability).toFixed(2) + " %");
+		wtraining.makeLabel(gui.c, null, digit + " --> " + (100 * probability).toFixed(2) + " %");
 	}
 
-	wtraining.makeLabel(c, null, " ");
-	wtraining.makeLabel(c, null, "Current network options ==> ");
-	wtraining.makeButton(c, UiAction.load_network_1, "load network 1 (random)");
-	wtraining.makeButton(c, UiAction.load_network_2, "load network 2 88% (728 -> 64 -> 32 -> 10)");
-	wtraining.makeButton(c, UiAction.load_network_3, "load network 3 81% (728 -> 48 -> 16 -> 10)");
-	wtraining.makeButton(c, UiAction.load_network_4, "load network 4 87% (728 -> 48 -> 16 -> 10)");
+	wtraining.makeLabel(gui.c, null, " ");
+	wtraining.makeLabel(gui.c, null, "Current network options:");
+	const width = 500;
+	const half = width / 2;
+	wtraining.setMode("two columns", { min_width: width, max_width: width });
 
-	wtraining.makeLabel(c, null, " ");
-	wtraining.makeLabel(c, null, "Training options ==> ");
-	wtraining.makeButton(c, UiAction.log_json_current_network, "log current network as json");
-	wtraining.makeButton(c, UiAction.begin_training, "begin training");
-	wtraining.makeButton(c, UiAction.log_network, "log network");
+	const y_offset = 3.0
+	wtraining.makeText(gui.c, null, "Load a randomly generated network. I do not know the network's size", half);
+	wtraining.cursor.y -= y_offset;
+	wtraining.makeButton(gui.c, UiAction.load_network_1, "Unknown size");
 
-	const ret = stack.requestAction(input_state);
+	wtraining.makeText(gui.c, null, "Load 88% performing network", half);
+	wtraining.cursor.y -= y_offset;
+	wtraining.makeButton(gui.c, UiAction.load_network_2, "Size: 784 -> 64 -> 32 -> 10");
+
+	wtraining.makeText(gui.c, null, "Load 81% performing network", half);
+	wtraining.cursor.y -= y_offset;
+	wtraining.makeButton(gui.c, UiAction.load_network_3, "Size: 784 -> 48 -> 16 -> 10");
+
+	wtraining.makeText(gui.c, null, "Load 87% performing network", half);
+	wtraining.cursor.y -= y_offset;
+	wtraining.makeButton(gui.c, UiAction.load_network_4, "Size: 784 -> 48 -> 16 -> 10");
+
+	wtraining.setMode("normal");
+
+	wtraining.makeLabel(gui.c, null, " ");
+	wtraining.makeLabel(gui.c, null, "Training options:");
+	wtraining.makeButton(gui.c, UiAction.log_json_current_network, "log current network as json");
+	wtraining.makeButton(gui.c, UiAction.begin_training, "begin training");
+	wtraining.makeButton(gui.c, UiAction.log_network, "log network");
+
+	const ret = stack.requestAction(gui.input_state);
 	const action = ret.action;
 
 	switch (action) {
@@ -125,10 +139,10 @@ const update = () => {
 			image_drawer.mode = image_drawer.mode == "draw" ? "erase" : "draw";
 			break;
 		case UiAction.drag_brush_size:
-			brush_size = Number(gui.updateDraggableValue(brush_size, input_state, 0.02, { min: 0, max: 10 }).toFixed(3));
+			brush_size = Number(gui.updateDraggableValue(brush_size, gui.input_state, 0.02, { min: 0, max: 10 }).toFixed(3));
 			break;
 		case UiAction.drag_draw_rate:
-			draw_rate = Number(gui.updateDraggableValue(draw_rate, input_state, 0.005, { min: 0, max: 1 }));
+			draw_rate = Number(gui.updateDraggableValue(draw_rate, gui.input_state, 0.005, { min: 0, max: 1 }));
 			break;
 		case UiAction.log_json_current_network:
 			console.log("'" + JSON.stringify(engine.network.toObject()) + "'");
@@ -155,10 +169,10 @@ const update = () => {
 			break;
 	}
 
-	if (JSON.stringify(input_state.active_widget_loc) == JSON.stringify([]) && input_state.mouse_down) {
+	if (JSON.stringify(gui.input_state.active_widget_loc) == JSON.stringify([]) && gui.input_state.mouse_down) {
 		const rect = nnc.canvas.getBoundingClientRect();
-		const x = input_state.mouse_position.x - rect.left;
-		const y = input_state.mouse_position.y - rect.top;
+		const x = gui.input_state.mouse_position.x - rect.left;
+		const y = gui.input_state.mouse_position.y - rect.top;
 
 		const x01 = x / rect.width;
 		const y01 = y / rect.height;
@@ -172,10 +186,10 @@ const update = () => {
 
 	engine.renderImage(image_drawer.image_input, nnc);
 
-	c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-	stack.stack_render(c, input_state);
+	gui.c.clearRect(0, 0, gui.c.canvas.width, gui.c.canvas.height);
+	stack.stack_render(gui.c, gui.input_state);
 
-	input_state.end();
+	gui.input_state.end();
 
 	requestAnimationFrame(update);
 }

@@ -160,14 +160,15 @@ export class Network {
 	}
 
 	softmax(activations: ml.Vector) {
+		const TEMP = 100;
 		var sum = 0.0;
 		for (let i = 0; i < activations.length; i++) {
 			const act = activations.elements[i];
-			sum += Math.exp(act);
+			sum += Math.exp(act * TEMP);
 		}
 		const vec = ml.Vector.fromType(activations.type, activations.length);
-		for (let i = 0; i < vec.length; i++) {
-			vec.elements[i] = Math.exp(activations.elements[i]) / sum;
+		for (let i = 0; i < activations.length; i++) {
+			vec.elements[i] = Math.exp(activations.elements[i] * TEMP) / sum;
 		}
 		return vec;
 	}

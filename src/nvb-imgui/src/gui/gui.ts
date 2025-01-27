@@ -1,40 +1,55 @@
-// NOTES:GG
-// layering of layouts. FUCK. indices of persistent states will be FUCKED.
-//  ==> Maybe other persistent array of index mapping? still FUCKED
-// More widgets :)
-// And even more widgets :)
-// NEW NOTES
-// * fix clearing of active widget when spawning new layout (window)
-// * more sophisticated popup handling. maybe internal handling of its states.
-// * color widget. vector4 with popups and everything twin
-// NEW NOTES
-// * fix gap issues in grid
-// STILL * fix grid onclick drag window thing
-// * fix other grid issues such as relative sizing issues and closing/finishing grid cursor thing
-// * color widget pls
-// fine with user based popup data handling. don't really want to fix that
-// the user can fuck off and learn the intricasies of the based nirf_gui.
-// NEW
-// * fix window height increasing wheh minimized and hover over close btn
-// * fix rendering such that pretty much nothing renders (tries to) when it is minimized
-// * COLOR widget pls
-// NEW
-// Need to to stack.createPopup
-// AND stack.createColorPickerPopup
 import { Stack } from "./stack.ts";
 
 export { Stack };
 
+const css_style = document.createElement("style");
+css_style.type = "text/css";
+css_style.appendChild(document.createTextNode(`
+    @font-face {
+    font-family: "Hack Regular";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Hack Regular"), url("hack-webfont/Hack-Regular.woff") format("woff");
+    }
+    
+
+    @font-face {
+    font-family: "Hack Italic";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Hack Italic"), url("hack-webfont/Hack-Italic.woff") format("woff");
+    }
+    
+
+    @font-face {
+    font-family: "Hack Bold";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Hack Bold"), url("hack-webfont/Hack-Bold.woff") format("woff");
+    }
+    
+
+    @font-face {
+    font-family: "Hack Bold Italic";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Hack Bold Italic"), url("hack-webfont/Hack-BoldItalic.woff") format("woff");
+    }`
+));
+document.head.appendChild(css_style);
+
 export const canvas = document.createElement("canvas");
-canvas.id = "nirf_canvas";
+canvas.id = "nvb-imgui-canvas";
 document.body.appendChild(canvas);
+canvas.style.position = "absolute";
+canvas.style.top = "0 px";
+canvas.style.left = "0 px";
 export function updateCanvasSizing() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   canvas.style.width = window.innerWidth + "px";
   canvas.style.height = window.innerHeight + "px";
 }
-updateCanvasSizing();
 
 /**
 * @param e num decimals to round of to
@@ -89,6 +104,12 @@ export class MColor {
   static default_bg: { r: 115; g: 140; b: 153; a: 1 };
 
   private static EPS_DECIMALS = 6;
+
+  static isColor(x: any) {
+    if (typeof x == typeof MColor.white)
+      return true;
+    return false;
+  }
 
   static string(color: Color): string {
     return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
@@ -240,21 +261,28 @@ export type Widget<ActionType> = {
 };
 
 export class GlobalStyle {
-  static font = "ProggyCleanTT";
-  // static font = "Martian Mono";
+  static font = "Hack Regular";
   static widget = {
-    default_bg_color: "#294A7AFF",
-    hover_bg_color: "#4296FAFF",
-    down_bg_color: "#0F87FAFF",
-  };
+    // DEAR IMGUI
+    //default_bg_color: "#294A7AFF",
+    //hover_bg_color: "#4296FAFF",
+    //down_bg_color: "#0F87FAFF",
+    default_bg_color: "#666170FF",
+    hover_bg_color: "#9992A8FF",
+    down_bg_color: "#CCC2E0FF",
+  }
   static label = {
     font_size: 16,
     default_font_color: MColor.white,
     inactive_font_color: MColor.fromHex("#808080FF"),
   };
+  static text = {
+    font_size: 12,
+    text_height_mult: 1.5,
+  };
   static button = {
     padding: 3,
-    font_size: 16,
+    font_size: 12,
   };
   static layout_commons = {
     padding: 10,
@@ -265,8 +293,9 @@ export class GlobalStyle {
   };
   static header_commons = {
     color: "#ffffff",
-    bg_color: "#294A7AFF",
-    font_size: 16,
+    //bg_color: "#294A7AFF",
+    bg_color: "#4b4654",
+    font_size: 12,
   };
   static window = {
     minimized_header_bg: "#9F9F9F09",
@@ -301,6 +330,8 @@ export class InputState {
 
   active_widget_loc: number[];
 
+  action_ret_var: any;
+
   private last_click_time: number;
   private double_click_threshold: number;
 
@@ -331,6 +362,8 @@ export class InputState {
 
     this.last_click_time = -1;
     this.double_click_threshold = 300; // Double-click threshold in milliseconds
+
+    this.action_ret_var = undefined;
 
     canvas.addEventListener("mousemove", (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -400,3 +433,6 @@ export class InputState {
     this.mouse_frame.double_clicked = false;
   }
 }
+
+export const c = <REND>canvas.getContext("2d");
+export const input_state = new InputState(canvas, 0, 0);

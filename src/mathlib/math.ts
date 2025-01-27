@@ -1,3 +1,11 @@
+/**
+ * x: the number
+ * e: number of decimals to be rounded to
+ */
+export function round(x: number, e: number): number {
+	return Math.floor(Math.pow(x, e)) / e;
+}
+
 export class PCG32 {
 	private state: bigint;
 	private readonly multiplier: bigint = 6364136223846793005n;
