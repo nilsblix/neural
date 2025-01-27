@@ -160,7 +160,7 @@ export class Network {
 	}
 
 	softmax(activations: ml.Vector) {
-		const TEMP = 100;
+		const TEMP = 10;
 		var sum = 0.0;
 		for (let i = 0; i < activations.length; i++) {
 			const act = activations.elements[i];

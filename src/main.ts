@@ -17,6 +17,7 @@ const enum UiAction {
 	render_image,
 	increment_img_id,
 	decrement_img_id,
+	drag_img_id,
 	log_json_current_network,
 	load_network_1,
 	load_network_2,
@@ -61,7 +62,7 @@ const update = () => {
 	gui.updateCanvasSizing();
 	const stack = new gui.Stack<gui.N<UiAction>>();
 
-	const wdraw = stack.makeWindow(gui.c, gui.input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 20, y: 40, title: "interactivity options", width: 280, height: 250 });
+	const wdraw = stack.makeWindow(gui.c, gui.input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 20, y: 40, title: "image drawer", width: 280, height: 270 });
 	wdraw.makeLabel(gui.c, null, "drawing options");
 	wdraw.makeDraggable(gui.c, UiAction.drag_brush_size, "brush size = " + brush_size);
 	wdraw.makeDraggable(gui.c, UiAction.drag_draw_rate, "draw rate = " + draw_rate);
@@ -69,8 +70,9 @@ const update = () => {
 
 	wdraw.makeLabel(gui.c, null, " ");
 	wdraw.makeLabel(gui.c, null, "render mnist images: ");
-	wdraw.makeButton(gui.c, UiAction.increment_img_id, "inc imagd id");
-	wdraw.makeButton(gui.c, UiAction.decrement_img_id, "dec imagd id");
+	wdraw.makeButton(gui.c, UiAction.increment_img_id, "inc image id");
+	wdraw.makeButton(gui.c, UiAction.decrement_img_id, "dec image id");
+	wdraw.makeDraggable(gui.c, UiAction.drag_img_id, "drag image id");
 	wdraw.makeButton(gui.c, UiAction.render_image, "render transformed image, id=" + img_id);
 
 	const wtraining = stack.makeWindow(gui.c, gui.input_state, { window: UiAction.placeholder, header: UiAction.placeholder, resizeable: UiAction.placeholder, close_btn: null }, { x: 10, title: "neural network options", y: 320, height: 465, width: 495 });
@@ -128,6 +130,9 @@ const update = () => {
 			break;
 		case UiAction.decrement_img_id:
 			img_id--;
+			break;
+		case UiAction.drag_img_id:
+			img_id = ml.round(gui.updateDraggableValue(img_id, gui.input_state, 1, { min: 0, max: Number.POSITIVE_INFINITY }), 1);
 			break;
 		case UiAction.begin_training:
 			engine.train();
