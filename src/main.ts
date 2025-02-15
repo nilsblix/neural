@@ -14,6 +14,7 @@ const enum UiAction {
 	drag_brush_size,
 	drag_draw_rate,
 	switch_draw_mode,
+	reset_image,
 	render_image,
 	increment_img_id,
 	decrement_img_id,
@@ -24,7 +25,6 @@ const enum UiAction {
 	load_network_3,
 	load_network_4,
 	toggle_softmax,
-
 }
 
 const engine = new Engine(34);
@@ -67,6 +67,7 @@ const update = () => {
 	wdraw.makeDraggable(gui.c, UiAction.drag_brush_size, "brush size = " + brush_size);
 	wdraw.makeDraggable(gui.c, UiAction.drag_draw_rate, "draw rate = " + draw_rate);
 	wdraw.makeButton(gui.c, UiAction.switch_draw_mode, "mode: " + image_drawer.mode);
+	wdraw.makeButton(gui.c, UiAction.reset_image, "reset image");
 
 	wdraw.makeLabel(gui.c, null, " ");
 	wdraw.makeLabel(gui.c, null, "render mnist images: ");
@@ -142,6 +143,10 @@ const update = () => {
 			break;
 		case UiAction.switch_draw_mode:
 			image_drawer.mode = image_drawer.mode == "draw" ? "erase" : "draw";
+			break;
+		case UiAction.reset_image:
+			const elem = new Float32Array(engine.input_size);
+			image_drawer.image_input = new ml.Vector(elem);
 			break;
 		case UiAction.drag_brush_size:
 			brush_size = Number(gui.updateDraggableValue(brush_size, gui.input_state, 0.02, { min: 0, max: 10 }).toFixed(3));

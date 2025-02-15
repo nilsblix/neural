@@ -14,7 +14,7 @@ export class Engine {
 
 	private readonly img_width = 28;
 
-	private readonly input_size = this.img_width * this.img_width;
+	readonly input_size = this.img_width * this.img_width;
 	private readonly output_size = 10;
 
 	private readonly num_epochs = 20; // 30
